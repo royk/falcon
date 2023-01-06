@@ -113,28 +113,34 @@ function arp()
             if (melodyIndex>melodyLength) then
                 melodyIndex = 1
             end
-        end 
         
-        local notes = {};
-        for k, e in pairs(isEventPlaying) do
-            table.insert(notes, e)
-        end
-        table.sort(notes, function(a,b) return a.note<b.note end)
-        --print(melodyIndex, noteToPlay)
-        local beat = time.value / 8;
-        if (noteToPlay==0) then
-            waitBeat(beat)
-        else
-	        local i = 1
-            local note = (noteToPlay % len) + 1
-	        for k, e in pairs(notes) do
-	            if (i == note) then
-	                playNote(e.note, e.velocity, 10 , e.layer, e.channel, e.input, e.vol, e.pan, e.tune, e.slice)
-	                waitBeat(beat)
-	                break
-	            end
-	            i = i + 1
-	        end
+            local notes = {};
+            for k, e in pairs(isEventPlaying) do
+                table.insert(notes, e) 
+            end
+            table.sort(notes, function(a,b) return a.note<b.note end)
+            --print(melodyIndex, noteToPlay)
+            local beat = time.value / 8;
+            if (melodyIndex==1 and b1.value==false) then
+                waitBeat(beat)
+            elseif (melodyIndex==2 and b2.value==false) then
+                waitBeat(beat);
+            elseif (melodyIndex==3 and b3.value==false) then
+                waitBeat(beat);
+            elseif (melodyIndex==4 and b4.value==false) then            
+                waitBeat(beat);
+            else
+    	        local i = 1
+                local note = (noteToPlay % len) + 1
+    	        for k, e in pairs(notes) do
+    	            if (i == note) then
+    	                playNote(e.note, e.velocity, 10 , e.layer, e.channel, e.input, e.vol, e.pan, e.tune, e.slice)
+    	                waitBeat(beat)
+    	                break
+    	            end
+    	            i = i + 1
+    	        end
+            end
         end
     end
     timeFoo = nil
