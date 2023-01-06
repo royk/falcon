@@ -91,7 +91,7 @@ function resetSeed()
     melody = {}
     pattern = {}
     randomMapIndex = 1;
-    print("--generating melody")
+    --print("--generating melody")
     while melodyLength<maxMelodyLength.value do
         math.randomseed(seed.value, 1)
         local noteToPlay = getRandom()
@@ -101,7 +101,7 @@ function resetSeed()
         print(noteToPlay,skip)
         melodyLength = melodyLength +1
     end
-    print("--done",melodyLength)
+    --print("--done",melodyLength)
     
     
 end
@@ -141,7 +141,7 @@ function arp()
         if (melodyIndex>melodyLength) then
             melodyIndex = 1 
         end
-        print(currentIndex,notePattern)
+        --print(currentIndex,notePattern)
         local notes = {};
         for k, e in pairs(isEventPlaying) do
             table.insert(notes, e) 
