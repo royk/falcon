@@ -20,66 +20,72 @@ maxMelodyLength.changed = function(self)
     resetSeed()
 end
 chance = Knob{"OffChance", 3, 1, 10, true}
-seed = Knob{"Seed", 10, 1, 10, true}
-seed.changed = function(self) 
+melodySelector = Knob{"Melody", 10, 1, 10, true}
+melodySelector.changed = function(self) 
     resetSeed()
 end
 
+seed = Knob{"Seed", 1, 1, 100, true}
+seed.changed = function(self)
+    randomMapInitiated = false
+    resetSeed()
+end
+ 
 b1 = OnOffButton("b1", false)
 b1.backgroundColourOff = "darkgrey"
 b1.backgroundColourOn = "darkred"
 b1.textColourOff = "white"
 b1.textColourOn = "white"
-b1.bounds = {500,10,10,10}
+b1.bounds = {600,10,10,10}
 
 b2 = OnOffButton("b2", false)
 b2.backgroundColourOff = "darkgrey"
 b2.backgroundColourOn = "darkred"
 b2.textColourOff = "white"
 b2.textColourOn = "white"
-b2.bounds = {515,10,10,10}
+b2.bounds = {615,10,10,10}
 
 b3 = OnOffButton("b3", false)
 b3.backgroundColourOff = "darkgrey"
 b3.backgroundColourOn = "darkred"
 b3.textColourOff = "white"
 b3.textColourOn = "white"
-b3.bounds = {530,10,10,10}
+b3.bounds = {630,10,10,10}
 
 b4 = OnOffButton("b4", false)
 b4.backgroundColourOff = "darkgrey"
 b4.backgroundColourOn = "darkred"
 b4.textColourOff = "white"
 b4.textColourOn = "white"
-b4.bounds = {545,10,10,10}
+b4.bounds = {645,10,10,10}
 
 b5 = OnOffButton("b5", false)
 b5.backgroundColourOff = "darkgrey"
 b5.backgroundColourOn = "darkred"
 b5.textColourOff = "white"
 b5.textColourOn = "white"
-b5.bounds = {500,25,10,10}
+b5.bounds = {600,25,10,10}
 
 b6 = OnOffButton("b6", false)
 b6.backgroundColourOff = "darkgrey"
 b6.backgroundColourOn = "darkred"
 b6.textColourOff = "white"
 b6.textColourOn = "white"
-b6.bounds = {515,25,10,10}
+b6.bounds = {615,25,10,10}
 
 b7 = OnOffButton("b7", false)
 b7.backgroundColourOff = "darkgrey"
 b7.backgroundColourOn = "darkred"
 b7.textColourOff = "white"
 b7.textColourOn = "white"
-b7.bounds = {530,25,10,10}
+b7.bounds = {630,25,10,10}
 
 b8 = OnOffButton("b8", false)
 b8.backgroundColourOff = "darkgrey"
 b8.backgroundColourOn = "darkred"
 b8.textColourOff = "white"
 b8.textColourOn = "white"
-b8.bounds = {545,25,10,10}
+b8.bounds = {645,25,10,10}
 
 isEventPlaying = {}
 
@@ -93,12 +99,11 @@ function resetSeed()
     randomMapIndex = 1;
     --print("--generating melody")
     while melodyLength<maxMelodyLength.value do
-        math.randomseed(seed.value, 1)
         local noteToPlay = getRandom()
         local skip = getRandom()
         table.insert(pattern, skip)
         table.insert(melody, noteToPlay)
-        print(noteToPlay,skip)
+        --print(noteToPlay,skip)
         melodyLength = melodyLength +1
     end
     --print("--done",melodyLength)
@@ -108,14 +113,15 @@ end
 
 function initiateRandomMap()
     randomMapInitiated = true
-    math.randomseed(1)
+    randomMap = {}
+    math.randomseed(seed.value)
     for i = 1,100,1 do
         table.insert(randomMap, math.random(1, 10))
     end
 end
 
 function getRandom()
-    local pos = (randomMapIndex*seed.value)%100+1
+    local pos = (randomMapIndex*melodySelector.value)%100+1
     local val = randomMap[pos]
     randomMapIndex = randomMapIndex + 1
 
