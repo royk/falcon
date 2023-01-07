@@ -120,7 +120,7 @@ function initiateRandomMap()
     math.randomseed(seed.value)
     -- 80 = (number of melodies) * max length of a melody (10 * 8 )
     for i = 1,80,1 do
-        table.insert(randomMelody, math.random(1, 10))
+        table.insert(randomMelody, math.random(1, 100))
         table.insert(randomGate, math.random(1, 10))
     end
 end
