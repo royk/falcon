@@ -4,7 +4,8 @@
 --! Date : 26/01/2023
 --------------------------------------------------------------------------------
 randomMapInitiated = false
-randomMap = {}
+randomMelody = {}
+randomGate = {}
 randomMapIndex = 1
 melody = {}
 pattern = {}
@@ -99,8 +100,9 @@ function resetSeed()
     randomMapIndex = 1;
     --print("--generating melody")
     while melodyLength<maxMelodyLength.value do
-        local noteToPlay = getRandom()
-        local skip = getRandom()
+        local noteToPlay = getRandom(randomMelody)
+        local skip = getRandom(randomGate)
+        randomMapIndex = randomMapIndex + 1
         table.insert(pattern, skip)
         table.insert(melody, noteToPlay)
         --print(noteToPlay,skip)
@@ -113,18 +115,20 @@ end
 
 function initiateRandomMap()
     randomMapInitiated = true
-    randomMap = {}
+    randomMelody = {}
+    randomGate = {}
     math.randomseed(seed.value)
-    for i = 1,100,1 do
-        table.insert(randomMap, math.random(1, 10))
+    -- 80 = (number of melodies) * max length of a melody (10 * 8 )
+    for i = 1,80,1 do
+        table.insert(randomMelody, math.random(1, 10))
+        table.insert(randomGate, math.random(1, 10))
     end
 end
 
-function getRandom()
-    local pos = (randomMapIndex*melodySelector.value)%100+1
+function getRandom(randomMap)
+    local pos = ((melodySelector.value-1)*8+randomMapIndex-1)%80+1
+    --print('Accessing',pos)
     local val = randomMap[pos]
-    randomMapIndex = randomMapIndex + 1
-
     return val
 end
 
