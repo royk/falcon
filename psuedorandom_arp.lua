@@ -51,16 +51,6 @@ rec.changed = function(self)
     end
 end
 rec.bounds = {0,60,50,20}
-load = Button("Load")
-load.changed = function() 
-    browseForFile('open', 'Load recording', '', '*.json', function(task)
-        loadData(task.result, function (data)
-            recorder = data
-            play.enabled = true
-        end)
-    end)
-end
-load.bounds = {60,60,50,20}
 play = OnOffButton{"Replay", false}
 play.changed = function(self)
     if (self.value==true) then 
@@ -72,8 +62,27 @@ play.changed = function(self)
         playLaunched = false
     end
 end
-play.bounds = {120,60,50,20}
+play.bounds = {60,60,50,20}
 play.enabled = false
+load = Button("Load")
+load.changed = function() 
+    browseForFile('open', 'Load recording', '', '*.json', function(task)
+        loadData(task.result, function (data)
+            recorder = data
+            play.enabled = true
+        end)
+    end)
+end
+load.bounds = {120,60,50,20}
+save = Button("Save")
+save.changed = function()
+    browseForFile('save', 'Save recording', '', '*.json', function(task)
+        saveData(recorder, task.result)
+    end)    
+end
+save.bounds = {180,60,50,20}
+save.enabled = false
+
 sequencer = {}
 for i = 1,8,1 do
     sequencer[i] = OnOffButton("sequencer"..tostring(i), false)
@@ -94,9 +103,9 @@ end
 isEventPlaying = {}
 
 function endRecording()
-    saveData(recorder, 'd:/record.json')
     print("Recording stopped")
     play.enabled = true
+    save.enabled = true
     recording = false
 end
 
@@ -156,7 +165,7 @@ function replay()
     end
     while playing do
         local e = recorder[playIndex]
-        print(playIndex,' ',len)
+        print(playIndex,'\t',len)
         if (playIndex>=len) then
             playIndex = 0
         end
