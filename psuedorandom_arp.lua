@@ -47,6 +47,7 @@ rec.changed = function(self)
     else
         saveData(recorder, 'd:/record.json')
         print(recorder)
+        play.enabled = true
     end
 end
 rec.bounds = {0,60,50,20}
@@ -55,6 +56,7 @@ load.changed = function()
     browseForFile('open', 'Load recording', '', '*.json', function(task)
         loadData(task.result, function (data)
             recorder = data
+            play.enabled = true
         end)
     end)
 end
@@ -70,6 +72,7 @@ play.changed = function(self)
     end
 end
 play.bounds = {120,60,50,20}
+play.enabled = false
 sequencer = {}
 for i = 1,8,1 do
     sequencer[i] = OnOffButton("sequencer"..tostring(i), false)
@@ -160,7 +163,6 @@ function replay()
 end
 
 function arp()
-    arpLaunched = false
     while arpLaunched do
         local len = tableLength(isEventPlaying)
         if (len == 0) then break end
