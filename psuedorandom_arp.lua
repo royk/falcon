@@ -6,6 +6,7 @@
 randomMapInitiated = false
 recorder = {}
 recording = false
+recordIndex = 1
 playing = false
 playLaunched = false
 playIndex = 0
@@ -44,10 +45,9 @@ rec.changed = function(self)
         recorder = {}
         recording = true
         print("Recording")
+        recordIndex = 1
     else
-        saveData(recorder, 'd:/record.json')
-        print(recorder)
-        play.enabled = true
+        endRecording()
     end
 end
 rec.bounds = {0,60,50,20}
@@ -69,6 +69,7 @@ play.changed = function(self)
         arpLaunched = false
     else
         playing = false
+        playLaunched = false
     end
 end
 play.bounds = {120,60,50,20}
@@ -91,6 +92,14 @@ end
  
 
 isEventPlaying = {}
+
+function endRecording()
+    saveData(recorder, 'd:/record.json')
+    print("Recording stopped")
+    play.enabled = true
+    recording = false
+end
+
 
 function resetSeed() 
     if (randomMapInitiated==false) then
@@ -191,6 +200,7 @@ function arp()
         if (maybeSkip==true and notePattern<=chance.value) then
             if (recording) then
                 table.insert(recorder, beat);
+                recordIndex = recordIndex +1
             end
             waitBeat(beat)
         else
@@ -201,6 +211,7 @@ function arp()
                     if (recording) then
                         table.insert(recorder, e);
                         table.insert(recorder, beat);
+                        recordIndex = recordIndex + 2
                     end
 	                playNote(e.note, e.velocity, 10 , e.layer, e.channel, e.input, e.vol, e.pan, e.tune, e.slice)
 	                waitBeat(beat)
@@ -208,6 +219,10 @@ function arp()
 	            end
 	            i = i + 1
 	        end
+        end
+        if (recordIndex>5000) then
+            -- protect from a too long recording
+            endRecording()
         end
 
     end
