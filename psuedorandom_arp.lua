@@ -22,12 +22,12 @@ time = Knob("Beat", 4, 1, 8, true)
 time.changed = function(self) 
     arpLaunched = false
 end
-maxMelodyLength = Knob{"Melody_Length", 4, 2, 8, true, displayName = "Length"}
+maxMelodyLength = Knob{"Melody_Length", 8, 2, 8, true, displayName = "Length"}
 maxMelodyLength.changed = function(self) 
     resetSeed()
 end
 chance = Knob{"OffChance", 3, 1, 10, true}
-melodySelector = Knob{"Melody", 10, 1, 10, true}
+melodySelector = Knob{"Melody", 1, 1, 10, true}
 melodySelector.changed = function(self) 
     resetSeed()
 end
