@@ -5,11 +5,15 @@
 --------------------------------------------------------------------------------
 randomMapInitiated = false
 recorder = {}
-recording = false
-recordIndex = 1
-playing = false
-playLaunched = false
-playIndex = 0
+-- two variables to deal with edge case where recording starting on first note doens't work the same as recording starting later
+recordingStartBeat = 0
+recordArm = "" -- schedules recording start/stop for next note in
+recording = false -- indicates recording is in progress
+recordIndex = 1 -- keep track of how long the recording is to avoid out of memory issues
+playing = false -- playback is in progress
+playLaunched = false -- playback loop control
+playbackArm = "" -- schedule playback start/stop for next note in
+playIndex = 0 -- the playback playhead
 randomMelody = {}
 randomGate = {}
 randomMapIndex = 1
@@ -42,28 +46,22 @@ rec = OnOffButton{"Rec", false}
 rec.backgroundColourOn = "darkred"
 rec.changed = function(self)
     if (self.value==true) then
-        recorder = {}
-        recording = true
-        print("Recording")
-        recordIndex = 1
+        recordArm = "start"
     else
-        endRecording()
+        recordArm = "stop"
     end
 end
 rec.bounds = {0,60,50,20}
 play = OnOffButton{"Replay", false}
 play.changed = function(self)
     if (self.value==true) then 
-        playing = true
-        playIndex = 1
-        arpLaunched = false
+        playbackArm = "start"
     else
-        playing = false
+        playbackArm = "stop"
         playLaunched = false
     end
 end
 play.bounds = {60,60,50,20}
-play.enabled = false
 load = Button("Load")
 load.changed = function() 
     browseForFile('open', 'Load recording', '', '*.json', function(task)
@@ -103,7 +101,26 @@ end
 isEventPlaying = {}
 
 function endRecording()
-    print("Recording stopped")
+    --edge cases: recoding on first beat records an extra note
+    -- otherwise, it records the first note as the last - so move it to the front
+    if (recordingStartBeat==0) then
+        table.remove(recorder)
+        table.remove(recorder)
+    else
+        local tempTable = {}
+        local a = table.remove(recorder)
+        local b = table.remove(recorder)
+        table.insert(tempTable, b)
+        table.insert(tempTable, a)
+        for i= 1, tableLength(recorder), 1 do
+            table.insert(tempTable, recorder[i])
+        end
+        recorder = tempTable
+
+        
+    end
+    print("Recording stopped. Length:", tableLength(recorder))
+
     play.enabled = true
     save.enabled = true
     recording = false
@@ -165,14 +182,19 @@ function replay()
     end
     while playing do
         local e = recorder[playIndex]
-        print(playIndex,'\t',len)
-        if (playIndex>=len) then
-            playIndex = 0
+        if (e==nil) then
+            playIndex = 1
+            e = recorder[playIndex]
         end
+        --print(playIndex,'\t',len, type(e))
         if (type(e)=="number") then
+            --print(playIndex,'\t',e,len)
             waitBeat(e)
+            
         else
+            --print(playIndex,'\t',e.note, len)
             playNote(e.note, e.velocity, 10 , e.layer, e.channel, e.input, e.vol, e.pan, e.tune, e.slice)
+            
         end        
 
         playIndex = playIndex+1
@@ -220,7 +242,10 @@ function arp()
                     if (recording) then
                         table.insert(recorder, e);
                         table.insert(recorder, beat);
-                        recordIndex = recordIndex + 2
+                        --print(recordIndex,'\t',e.note, getRunningBeatTime())
+                        recordIndex = recordIndex + 1
+                        --print(recordIndex,'\t',beat)
+                        recordIndex = recordIndex + 1
                     end
 	                playNote(e.note, e.velocity, 10 , e.layer, e.channel, e.input, e.vol, e.pan, e.tune, e.slice)
 	                waitBeat(beat)
@@ -229,6 +254,7 @@ function arp()
 	            i = i + 1
 	        end
         end
+        --print(tableLength(recorder))
         if (recordIndex>5000) then
             -- protect from a too long recording
             endRecording()
@@ -239,11 +265,39 @@ function arp()
     arpLaunched = false
 end
 
--- CALLBACKS
+-- CALLBACKS 
 
 local idsPlaying
 function onNote(e)
     isEventPlaying[e.id] = e
+    if recordArm~="" then
+        if playing==false then 
+            if recordArm=="start" then
+                recording = true
+                recorder = {}
+                recordIndex = 1
+                recordingStartBeat = getRunningBeatTime()
+                print("Recording started")
+            else
+                endRecording()
+            end
+            recordArm = ""
+        end
+    end
+    if playbackArm~="" then
+        if recording==false then
+            if playbackArm=="start" then
+                playing = true
+                playIndex = 1
+                arpLaunched = false
+                print("Playback started. Length:", tableLength(recorder))
+            else
+                playing = false
+                print("Playback ended")
+            end
+            playbackArm = ""
+        end
+    end
     if playing then
         if not playLaunched then
             playIndex = 1
