@@ -20,20 +20,23 @@ randomMapIndex = 1
 melody = {}
 pattern = {}
 melodyIndex = 1
+resetMelodyIndex = false
 melodyLength = 0
 arpLaunched = false
+
+actualTime = 4  -- actualTime is the time used to perform beat calculation, so we don't change it mid melody
 time = Knob("Beat", 4, 1, 8, true)
-time.changed = function(self) 
-    arpLaunched = false
-end
-maxMelodyLength = Knob{"Melody_Length", 8, 2, 8, true, displayName = "Length"}
+
+maxMelodyLength = Knob{"Melody_Length", 8, 2, 16, true, displayName = "Length"}
 maxMelodyLength.changed = function(self) 
     resetSeed()
+    enableSequencerByMelodyLength()
 end
 chance = Knob{"OffChance", 3, 1, 10, true}
 melodySelector = Knob{"Melody", 1, 1, 10, true}
 melodySelector.changed = function(self) 
     resetSeed()
+    
 end
 
 seed = Knob{"Seed", 1, 1, 100, true}
@@ -82,7 +85,7 @@ save.bounds = {180,60,50,20}
 save.enabled = false
 
 sequencer = {}
-for i = 1,8,1 do
+for i = 1,16,1 do
     sequencer[i] = OnOffButton("sequencer"..tostring(i), false)
     sequencer[i].backgroundColourOff = "darkgrey"
     sequencer[i].backgroundColourOn = "darkred"
@@ -90,32 +93,36 @@ for i = 1,8,1 do
     sequencer[i].textColourOn = "white"
     local y = 15
     local x = i-1
-    if i>4 then
+    if i>8 then
         y = y+15
-        x = x-4
+        x = x-8
     end
     sequencer[i].bounds = {600+15*x,y,10,10}
+    sequencer[i].enabled = i<=8
 end
  
 
 isEventPlaying = {}
 
+function enableSequencerByMelodyLength() 
+    for i = 1,16,1 do
+        sequencer[i].enabled = i<=maxMelodyLength.value
+    end
+end
+
 function endRecording()
-    --edge cases: recoding on first beat records an extra note
-    -- otherwise, it records the first note as the last - so move it to the front
+    --edge cases: recoding on first beat records an extra wait
+    -- otherwise, it records the first wait as the last - so move it to the front
     if (recordingStartBeat==0) then
-        table.remove(recorder)
         table.remove(recorder)
     else
         local tempTable = {}
         local a = table.remove(recorder)
-        local b = table.remove(recorder)
-        table.insert(tempTable, b)
         table.insert(tempTable, a)
         for i= 1, tableLength(recorder), 1 do
             table.insert(tempTable, recorder[i])
         end
-        recorder = tempTable
+         recorder = tempTable
 
         
     end
@@ -135,6 +142,7 @@ function resetSeed()
     melody = {}
     pattern = {}
     randomMapIndex = 1;
+    resetMelodyIndex = true
     --print("--generating melody")
     while melodyLength<maxMelodyLength.value do
         local noteToPlay = getRandom(randomMelody)
@@ -155,15 +163,17 @@ function initiateRandomMap()
     randomMelody = {}
     randomGate = {}
     math.randomseed(seed.value*1000)
-    -- 80 = (number of melodies) * max length of a melody (10 * 8 )
-    for i = 1,80,1 do
+    -- 160 = (number of melodies) * max length of a melody (10 * 16 )
+    for i = 1,160,1 do
         table.insert(randomMelody, math.random(1, 100))
         table.insert(randomGate, math.random(1, 10))
     end
 end
 
-function getRandom(randomMap)
-    local pos = ((melodySelector.value-1)*8+randomMapIndex-1)%80+1
+function getRandom(randomMap)  
+    --local pos = ((melodySelector.value-1)*8+randomMapIndex-1)%80+1
+    --local pos = randomMapIndex*melodySelector.value%80+1
+    local pos = ((randomMapIndex-1)*10+melodySelector.value-1)%160+1
     --print('Accessing',pos)
     local val = randomMap[pos]
     return val
@@ -186,7 +196,7 @@ function replay()
             playIndex = 1
             e = recorder[playIndex]
         end
-        --print(playIndex,'\t',len, type(e))
+        -- print(playIndex,'\t',len, type(e))
         if (type(e)=="number") then
             --print(playIndex,'\t',e,len)
             waitBeat(e)
@@ -206,24 +216,25 @@ function arp()
     while arpLaunched do
         local len = tableLength(isEventPlaying)
         if (len == 0) then break end
-        
-        local noteToPlay = melody[(melodyIndex % melodyLength) + 1]
-        local notePattern = pattern[(melodyIndex  % melodyLength) + 1]
+        local idx = melodyIndex
+        if (melodyIndex>melodyLength) then
+            melodyIndex = 1 
+        end
+        local noteToPlay = melody[melodyIndex]
+        local notePattern = pattern[melodyIndex]
         local currentIndex = melodyIndex
         melodyIndex = melodyIndex+1
         if (melodyIndex>melodyLength) then
             melodyIndex = 1 
         end
-        --print(currentIndex,notePattern)
-        local notes = {};
+         local notes = {};
         for k, e in pairs(isEventPlaying) do
             table.insert(notes, e) 
         end
         table.sort(notes, function(a,b) return a.note<b.note end)
-         
-        local beat = 1/time.value;
+        local beat = 1/actualTime;
         local maybeSkip = false
-        for i = 1,8,1 do
+        for i = 1,maxMelodyLength.value,1 do
             if (currentIndex==i and sequencer[i].value==false) then
                 maybeSkip = true
             end 
@@ -231,14 +242,15 @@ function arp()
         if (maybeSkip==true and notePattern<=chance.value) then
             if (recording) then
                 table.insert(recorder, beat);
+                --print(recordIndex,'\t',beat)
                 recordIndex = recordIndex +1
             end
             waitBeat(beat)
         else
-	        local i = 1
+            local i = 1
             local note = (noteToPlay % len) + 1
-	        for k, e in pairs(notes) do
-	            if (i == note) then
+            for k, e in pairs(notes) do
+                if (i == note) then
                     if (recording) then
                         table.insert(recorder, e);
                         table.insert(recorder, beat);
@@ -246,13 +258,14 @@ function arp()
                         recordIndex = recordIndex + 1
                         --print(recordIndex,'\t',beat)
                         recordIndex = recordIndex + 1
+                        
                     end
-	                playNote(e.note, e.velocity, 10 , e.layer, e.channel, e.input, e.vol, e.pan, e.tune, e.slice)
-	                waitBeat(beat)
-	                break
-	            end
-	            i = i + 1
-	        end
+                    playNote(e.note, e.velocity, 10 , e.layer, e.channel, e.input, e.vol, e.pan, e.tune, e.slice)
+                    waitBeat(beat)
+                    break
+                end
+                i = i + 1
+            end
         end
         --print(tableLength(recorder))
         if (recordIndex>5000) then
@@ -270,6 +283,11 @@ end
 local idsPlaying
 function onNote(e)
     isEventPlaying[e.id] = e
+    actualTime = time.value
+    if resetMelodyIndex==true then
+        resetMelodyIndex = false;
+        melodyIndex = 1
+    end
     if recordArm~="" then
         if playing==false then 
             if recordArm=="start" then
@@ -278,10 +296,8 @@ function onNote(e)
                 recordIndex = 1
                 recordingStartBeat = getRunningBeatTime()
                 print("Recording started")
-            else
-                endRecording()
+                recordArm = ""
             end
-            recordArm = ""
         end
     end
     if playbackArm~="" then
@@ -291,11 +307,8 @@ function onNote(e)
                 playIndex = 1
                 arpLaunched = false
                 print("Playback started. Length:", tableLength(recorder))
-            else
-                playing = false
-                print("Playback ended")
+                playbackArm = ""
             end
-            playbackArm = ""
         end
     end
     if playing then
@@ -313,6 +326,23 @@ function onNote(e)
 end
 
 function onRelease(e)
+    if recordArm~="" then
+        if playing==false then 
+            if recordArm~="start" then
+                endRecording()
+                recordArm = ""
+            end
+        end
+    end
+    if playbackArm~="" then
+        if recording==false then
+            if playbackArm~="start" then
+                playing = false
+                print("Playback ended")
+                playbackArm = ""
+            end
+        end
+    end
     isEventPlaying[e.id] = nil
 end
 
