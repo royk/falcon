@@ -1,4 +1,5 @@
-# UVI Falcon Scripts by Roy Klein / Memento Eternum
+# UVI Falcon Scripts 
+## by Roy Klein (https://www.instagram.com/memento.eternum/)
 
 If you make use of the Scripts please let me know! It motivates me to make more.
 
