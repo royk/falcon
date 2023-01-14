@@ -48,7 +48,7 @@ Recording and Replay produce console message for your convenience.
 These buttons allow you to save your recording, and load them for later replay. The recording is saved in a JSON format for easy modificaton. In the JSON, numbers entities represent "Wait", where 1 equals 1 beat (so for example, a 1/4th note will equal 0.25).
 
 
-
+----------------------------------------------
 
 For bug reports/feature requests please use github
 
