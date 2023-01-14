@@ -1,5 +1,5 @@
 --------------------------------------------------------------------------------
---! PsuedoRandom Arp
+--! PseudoRandom Arp
 --! Author : Roy Klein/Memento Eternum (based on work by Louis Couka)
 --! URL: https://github.com/royk/falcon
 --! Date : 26/01/2023
