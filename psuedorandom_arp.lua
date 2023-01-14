@@ -1,8 +1,13 @@
 --------------------------------------------------------------------------------
 --! PsuedoRandom Arp
 --! Author : Roy Klein/Memento Eternum (based on work by Louis Couka)
+--! URL: https://github.com/royk/falcon
 --! Date : 26/01/2023
 --------------------------------------------------------------------------------
+
+melodyMaximumLength = 16
+
+maxTable = 10 * melodyMaximumLength
 randomMapInitiated = false
 recorder = {}
 -- two variables to deal with edge case where recording starting on first note doens't work the same as recording starting later
@@ -23,11 +28,9 @@ melodyIndex = 1
 resetMelodyIndex = false
 melodyLength = 0
 arpLaunched = false
-
-actualTime = 4  -- actualTime is the time used to perform beat calculation, so we don't change it mid melody
+actualTime = 4  -- updates to time.value only when on full beat, so the melody never gets out of sync
 time = Knob("Beat", 4, 1, 8, true)
-
-maxMelodyLength = Knob{"Melody_Length", 8, 2, 16, true, displayName = "Length"}
+maxMelodyLength = Knob{"Melody_Length", 8, 2, melodyMaximumLength, true, displayName = "Length"}
 maxMelodyLength.changed = function(self) 
     resetSeed()
     enableSequencerByMelodyLength()
@@ -85,18 +88,15 @@ save.bounds = {180,60,50,20}
 save.enabled = false
 
 sequencer = {}
-for i = 1,16,1 do
+for i = 1,melodyMaximumLength,1 do
     sequencer[i] = OnOffButton("sequencer"..tostring(i), false)
     sequencer[i].backgroundColourOff = "darkgrey"
     sequencer[i].backgroundColourOn = "darkred"
     sequencer[i].textColourOff = "white"
     sequencer[i].textColourOn = "white"
-    local y = 15
-    local x = i-1
-    if i>8 then
-        y = y+15
-        x = x-8
-    end
+    local row = math.floor((i-1)/8)+1
+    local y = 15*row
+    local x = (i-1)%8
     sequencer[i].bounds = {600+15*x,y,10,10}
     sequencer[i].enabled = i<=8
 end
@@ -105,7 +105,7 @@ end
 isEventPlaying = {}
 
 function enableSequencerByMelodyLength() 
-    for i = 1,16,1 do
+    for i = 1,melodyMaximumLength,1 do
         sequencer[i].enabled = i<=maxMelodyLength.value
     end
 end
@@ -163,8 +163,7 @@ function initiateRandomMap()
     randomMelody = {}
     randomGate = {}
     math.randomseed(seed.value*1000)
-    -- 160 = (number of melodies) * max length of a melody (10 * 16 )
-    for i = 1,160,1 do
+    for i = 1,maxTable,1 do
         table.insert(randomMelody, math.random(1, 100))
         table.insert(randomGate, math.random(1, 10))
     end
@@ -173,7 +172,7 @@ end
 function getRandom(randomMap)  
     --local pos = ((melodySelector.value-1)*8+randomMapIndex-1)%80+1
     --local pos = randomMapIndex*melodySelector.value%80+1
-    local pos = ((randomMapIndex-1)*10+melodySelector.value-1)%160+1
+    local pos = ((randomMapIndex-1)*10+melodySelector.value-1)%maxTable+1
     --print('Accessing',pos)
     local val = randomMap[pos]
     return val
@@ -214,6 +213,15 @@ end
 
 function arp()
     while arpLaunched do
+        -- only update beat division on beat, to avoid getting out of sync
+        if (actualTime~=time.value) then
+            local waitForBeat = getRunningBeatTime()-math.floor(getRunningBeatTime())
+            waitForBeat = 1 - waitForBeat
+            --print('resetting beat',getRunningBeatTime(), waitForBeat)
+            waitBeat(waitForBeat)
+            --print('time:',getRunningBeatTime())
+            actualTime = time.value
+        end
         local len = tableLength(isEventPlaying)
         if (len == 0) then break end
         local idx = melodyIndex
@@ -272,6 +280,7 @@ function arp()
             -- protect from a too long recording
             endRecording()
         end
+        
 
     end
     timeFoo = nil
@@ -283,7 +292,7 @@ end
 local idsPlaying
 function onNote(e)
     isEventPlaying[e.id] = e
-    actualTime = time.value
+    
     if resetMelodyIndex==true then
         resetMelodyIndex = false;
         melodyIndex = 1
@@ -345,4 +354,3 @@ function onRelease(e)
     end
     isEventPlaying[e.id] = nil
 end
-
