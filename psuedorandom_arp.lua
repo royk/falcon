@@ -35,7 +35,7 @@ maxMelodyLength.changed = function(self)
     resetSeed()
     enableSequencerByMelodyLength()
 end
-chance = Knob{"OffChance", 3, 1, 10, true}
+chance = Knob{"OffChance", 3, 1, 20, true}
 melodySelector = Knob{"Melody", 1, 1, 10, true}
 melodySelector.changed = function(self) 
     resetSeed()
@@ -165,7 +165,7 @@ function initiateRandomMap()
     math.randomseed(seed.value*1000)
     for i = 1,maxTable,1 do
         table.insert(randomMelody, math.random(1, 100))
-        table.insert(randomGate, math.random(1, 10))
+        table.insert(randomGate, math.random(1, 20))
     end
 end
 
@@ -310,7 +310,10 @@ function onNote(e)
         end
     end
     if playbackArm~="" then
-        if recording==false then
+        if playbackArm=="pause" then
+            playing = true;
+            playbackArm = "";
+        elseif recording==false then
             if playbackArm=="start" then
                 playing = true
                 playIndex = 1
@@ -339,17 +342,23 @@ function onRelease(e)
         if playing==false then 
             if recordArm~="start" then
                 endRecording()
-                recordArm = ""
+                recordArm = "" 
             end
         end
     end
     if playbackArm~="" then
         if recording==false then
-            if playbackArm~="start" then
+            if playbackArm=="stop" then
                 playing = false
                 print("Playback ended")
                 playbackArm = ""
             end
+        end
+    else
+        -- if song playback is stop, dont keep running the replay
+        if playing==true then
+            playbackArm = "pause"
+            playing = false
         end
     end
     isEventPlaying[e.id] = nil
