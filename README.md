@@ -33,7 +33,7 @@ Every seed value generates a different collection of 10 melodies. With seed goin
 
 ### Sequencer
 
-These rows of buttons indicates with notes in the melody are forced to play. This overrides "OffChance". For example, you can fix which notes play by turning OffChance to 20 (all notes are off), and turning off some notes in the sequencer(which overrides OffChance). The Sequencer will dynamically disable buttons representing notes outside the melody length.
+These rows of buttons indicates which notes in the melody are forced to play. This overrides "OffChance". For example, you can fix which notes play by turning OffChance to 20 (all notes are off), and turning off some notes in the sequencer (which overrides OffChance). The Sequencer will dynamically disable buttons representing notes outside the melody length.
 
 ### Rec, Replay
 
