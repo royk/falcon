@@ -37,7 +37,7 @@ These rows of buttons indicates which notes in the melody are forced to play. Th
 
 ### Rec, Replay
 
-Clicking "Rec" will start a recording of the played melody. You can modify all controls during recording to store a specific melody or a jam. Note that there is a limit to the length of the recording and it will turn itself off whent hat limit is reached. Recording will start at the next "Note on" event after clicking, and will stop at the next "Note off" event when Rec is clicked again.
+Clicking "Rec" will start a recording of the played melody. You can modify all controls during recording to store a specific melody or a jam. Note that there is a limit to the length of the recording and it will turn itself off when that limit is reached. Recording will start at the next "Note on" event after clicking, and will stop at the next "Note off" event when Rec is clicked again.
 
 
 Replay will play the stored recorded melody. Just like "Rec", it starts and stops at the adjacent note on and note off events respectively.
