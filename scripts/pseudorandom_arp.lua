@@ -29,6 +29,22 @@ resetMelodyIndex = false
 melodyLength = 0
 arpLaunched = false
 actualTime = 4  -- updates to time.value only when on full beat, so the melody never gets out of sync
+noteLengthKnob = Knob{"Note_Length", 2, 0, 4, true, displayName="Note Length"}
+noteLength = 0.25
+noteLengthKnob.displayText = "1/4"
+noteLengthKnob.changed = function(self)
+    -- 0: 16th note
+    -- 1: 8th note
+    -- 2: 4th note
+    -- 3: half onte
+    -- 4: whole note
+    -- switch case returning a label based on the value of the knob
+    local noteLengthLabels = {"1/16", "1/8", "1/4", "1/2", "1"}
+    noteLengthKnob.displayText = noteLengthLabels[self.value + 1] or ""
+    local noteLengthValues = {0.0625, 0.125, 0.25, 0.5, 1}
+    noteLength = noteLengthValues[self.value + 1] or 0.25
+end
+
 time = Knob("Beat", 4, 1, 8, true)
 maxMelodyLength = Knob{"Melody_Length", 8, 2, melodyMaximumLength, true, displayName = "Length"}
 maxMelodyLength.changed = function(self) 
@@ -95,9 +111,9 @@ for i = 1,melodyMaximumLength,1 do
     sequencer[i].textColourOff = "white"
     sequencer[i].textColourOn = "white"
     local row = math.floor((i-1)/8)+1
-    local y = 15*row
+    local y = 35+(20*row)
     local x = (i-1)%8
-    sequencer[i].bounds = {600+15*x,y,10,10}
+    sequencer[i].bounds = {300+15*x,y,10,10}
     sequencer[i].enabled = i<=8
 end
  
@@ -202,7 +218,7 @@ function replay()
             
         else
             --print(playIndex,'\t',e.note, len)
-            playNote(e.note, e.velocity, 10 , e.layer, e.channel, e.input, e.vol, e.pan, e.tune, e.slice)
+            playNote(e.note, e.velocity, noteLgetBeatDuration() * noteLengthength , e.layer, e.channel, e.input, e.vol, e.pan, e.tune, e.slice)
             
         end        
 
@@ -268,7 +284,7 @@ function arp()
                         recordIndex = recordIndex + 1
                         
                     end
-                    playNote(e.note, e.velocity, 10 , e.layer, e.channel, e.input, e.vol, e.pan, e.tune, e.slice)
+                    playNote(e.note, e.velocity, getBeatDuration() * noteLength , e.layer, e.channel, e.input, e.vol, e.pan, e.tune, e.slice)
                     waitBeat(beat)
                     break
                 end
