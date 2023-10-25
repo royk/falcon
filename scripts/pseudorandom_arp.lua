@@ -78,6 +78,7 @@ function enableSequencerByMelodyLength()
 end
 
 function resetSeed() 
+
     if (randomMapInitiated==false) then
         initiateRandomMap()
     end
@@ -94,6 +95,7 @@ function resetSeed()
         table.insert(melody, noteToPlay)
         melodyLength = melodyLength +1
     end
+    print('seed set', melody[2])
  end
 
 function initiateRandomMap()
@@ -122,6 +124,20 @@ function tableLength(T)
   return count 
 end
 
+function printMelody(melodyIndex, len)
+    local str = "";
+    for i=1,8,1 do
+        if melodyIndex==i then
+            str = str .. ">" .. tostring( (melody[i] % len ) + 1)
+        else
+            str = str .. " " .. tostring( (melody[i] % len ) + 1)
+        end
+        
+    end
+    print(str)
+    return
+end
+
 function arp()
     while arpLaunched do
         -- only update beat division on beat, to avoid getting out of sync
@@ -133,20 +149,39 @@ function arp()
             --print('time:',getRunningBeatTime())
             actualTime = time.value
         end
+        
         local len = tableLength(isEventPlaying)
         if (len == 0) then break end
-        local idx = melodyIndex
+        local findEndNote = true
+        local noteCount = 1
         if (melodyIndex>melodyLength) then
             melodyIndex = 1 
         end
-        local noteToPlay = melody[melodyIndex]
+        local startIndex = melodyIndex
+        local noteToPlay = (melody[melodyIndex] % len ) + 1
+        repeat 
+            local idx = melodyIndex + noteCount
+            if noteCount>1 then
+            end
+            if idx>melodyLength then 
+                findEndNote = false
+            else 
+                local currentNote = (melody[idx] % len ) + 1
+                if (currentNote==noteToPlay) then
+                    noteCount = noteCount + 1
+                else
+                    findEndNote = false
+                end
+            end
+        until findEndNote == false
+        
         local notePattern = pattern[melodyIndex]
         local currentIndex = melodyIndex
-        melodyIndex = melodyIndex+1
+        melodyIndex = melodyIndex+noteCount
         if (melodyIndex>melodyLength) then
             melodyIndex = 1 
         end
-         local notes = {};
+        local notes = {};
         for k, e in pairs(isEventPlaying) do
             table.insert(notes, e) 
         end
@@ -162,18 +197,17 @@ function arp()
             waitBeat(beat)
         else
             local i = 1
-            local note = (noteToPlay % len) + 1
+            local note = noteToPlay
             for k, e in pairs(notes) do
                 if (i == note) then
-                    playNote(e.note, e.velocity, getBeatDuration() * noteLength , e.layer, e.channel, e.input, e.vol, e.pan, e.tune, e.slice)
-                    waitBeat(beat)
+                    printMelody(currentIndex, len)
+                    playNote(e.note, e.velocity, getBeatDuration() * noteLength * noteCount , e.layer, e.channel, e.input, e.vol, e.pan, e.tune, e.slice)
+                    waitBeat(beat*noteCount)
                     break
                 end
                 i = i + 1
             end
         end
-        
-
     end
     timeFoo = nil
     arpLaunched = false
@@ -190,10 +224,15 @@ function onNote(e)
         melodyIndex = 1
     end
     if not arpLaunched then
-        melodyIndex = 1
-        resetSeed()
-        arpLaunched = true
-        run(arp)
+        local len = tableLength(isEventPlaying)
+        -- todo: find how to start the arp only when the last note was played. right now we assume it's a 4 note arp
+        if len==4 then
+            print('Launching arp')
+            melodyIndex = 1
+            resetSeed()
+            arpLaunched = true
+            run(arp)
+        end
     end
 end
 
