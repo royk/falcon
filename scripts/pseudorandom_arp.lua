@@ -95,7 +95,6 @@ function resetSeed()
         table.insert(melody, noteToPlay)
         melodyLength = melodyLength +1
     end
-    print('seed set', melody[2])
  end
 
 function initiateRandomMap()
@@ -126,7 +125,7 @@ end
 
 function printMelody(melodyIndex, len)
     local str = "";
-    for i=1,8,1 do
+    for i=1,melodyLength,1 do
         if melodyIndex==i then
             str = str .. ">" .. tostring( (melody[i] % len ) + 1)
         else
@@ -223,16 +222,13 @@ function onNote(e)
         resetMelodyIndex = false;
         melodyIndex = 1
     end
+    wait(1)
     if not arpLaunched then
         local len = tableLength(isEventPlaying)
-        -- todo: find how to start the arp only when the last note was played. right now we assume it's a 4 note arp
-        if len==4 then
-            print('Launching arp')
-            melodyIndex = 1
-            resetSeed()
-            arpLaunched = true
-            run(arp)
-        end
+        melodyIndex = 1
+        resetSeed()
+        arpLaunched = true
+        run(arp)
     end
 end
 
