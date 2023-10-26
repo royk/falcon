@@ -208,13 +208,11 @@ function arp()
             end
         end
     end
-    timeFoo = nil
     arpLaunched = false
 end
 
 -- CALLBACKS 
 
-local idsPlaying
 function onNote(e)
     isEventPlaying[e.id] = e
     
@@ -224,7 +222,6 @@ function onNote(e)
     end
     wait(1)
     if not arpLaunched then
-        local len = tableLength(isEventPlaying)
         melodyIndex = 1
         resetSeed()
         arpLaunched = true

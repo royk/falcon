@@ -7,6 +7,10 @@ If you make use of the Scripts please let me know! It motivates me to make more.
 
 The purpose of this arp is to generate random yet reproducible melodies on the fly. Reproducible means that you won't get different melodies every time you use the arp, allowing you to build parts, melodies and jams with predictable outcomes.
 
+### Note Length
+
+The length given to each note. Quarter note, half note, etc.
+
 ### Beat
 
 Beat division value. For example, 4 means 1/4th note. When this is changed during playtime, the script will wait for the next beat before starting the arp again, to prevent the melody from going off beat.
@@ -34,20 +38,6 @@ Every seed value generates a different collection of 10 melodies. With seed goin
 ### Sequencer
 
 These rows of buttons indicates which notes in the melody are forced to play. This overrides "OffChance". For example, you can fix which notes play by turning OffChance to 20 (all notes are off), and turning off some notes in the sequencer (which overrides OffChance). The Sequencer will dynamically disable buttons representing notes outside the melody length.
-
-### Rec, Replay
-
-Clicking "Rec" will start a recording of the played melody. You can modify all controls during recording to store a specific melody or a jam. Note that there is a limit to the length of the recording and it will turn itself off when that limit is reached. Recording will start at the next "Note on" event after clicking, and will stop at the next "Note off" event when Rec is clicked again.
-
-
-Replay will play the stored recorded melody. Just like "Rec", it starts and stops at the adjacent note on and note off events respectively.
-
-Recording and Replay produce console message for your convenience.
-
-### Load, Save
-
-These buttons allow you to save your recording, and load them for later replay. The recording is saved in a JSON format for easy modificaton. In the JSON, numbers entities represent "Wait", where 1 equals 1 beat (so for example, a 1/4th note will equal 0.25).
-
 
 ----------------------------------------------
 
