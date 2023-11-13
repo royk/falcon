@@ -39,9 +39,7 @@ time = Knob("Beat", 4, 1, 8, true)
 maxMelodyLength = Knob{"Melody_Length", 8, 2, melodyMaximumLength, true, displayName = "Length"}
 maxMelodyLength.changed = function(self) 
     resetSeed()
-    enableSequencerByMelodyLength()
 end
-chance = Knob{"OffChance", 3, 1, 20, true}
 melodySelector = Knob{"Melody", 1, 1, 10, true}
 melodySelector.changed = function(self) 
     resetSeed()
@@ -54,28 +52,12 @@ seed.changed = function(self)
     resetSeed()
 end
 
-sequencer = {}
-for i = 1,melodyMaximumLength,1 do
-    sequencer[i] = OnOffButton("sequencer"..tostring(i), false)
-    sequencer[i].backgroundColourOff = "darkgrey"
-    sequencer[i].backgroundColourOn = "darkred"
-    sequencer[i].textColourOff = "white"
-    sequencer[i].textColourOn = "white"
-    local row = math.floor((i-1)/8)+1
-    local y = 35+(20*row)
-    local x = (i-1)%8
-    sequencer[i].bounds = {300+15*x,y,10,10}
-    sequencer[i].enabled = i<=8
-end
+legato = OnOffButton{"Legato", false}
  
 
 isEventPlaying = {}
 
-function enableSequencerByMelodyLength() 
-    for i = 1,melodyMaximumLength,1 do
-        sequencer[i].enabled = i<=maxMelodyLength.value
-    end
-end
+
 
 function resetSeed() 
 
@@ -158,21 +140,23 @@ function arp()
         end
         local startIndex = melodyIndex
         local noteToPlay = (melody[melodyIndex] % len ) + 1
-        repeat 
-            local idx = melodyIndex + noteCount
-            if noteCount>1 then
-            end
-            if idx>melodyLength then 
-                findEndNote = false
-            else 
-                local currentNote = (melody[idx] % len ) + 1
-                if (currentNote==noteToPlay) then
-                    noteCount = noteCount + 1
-                else
-                    findEndNote = false
+        if legato.value then
+            repeat 
+                local idx = melodyIndex + noteCount
+                if noteCount>1 then
                 end
-            end
-        until findEndNote == false
+                if idx>melodyLength then 
+                    findEndNote = false
+                else 
+                    local currentNote = (melody[idx] % len ) + 1
+                    if (currentNote==noteToPlay) then
+                        noteCount = noteCount + 1
+                    else
+                        findEndNote = false
+                    end
+                end
+            until findEndNote == false
+        end
         
         local notePattern = pattern[melodyIndex]
         local currentIndex = melodyIndex
@@ -186,26 +170,21 @@ function arp()
         end
         table.sort(notes, function(a,b) return a.note<b.note end)
         local beat = 1/actualTime;
-        local maybeSkip = false
-        for i = 1,maxMelodyLength.value,1 do
-            if (currentIndex==i and sequencer[i].value==false) then
-                maybeSkip = true
-            end 
-        end
-        if (maybeSkip==true and notePattern<=chance.value) then
-            waitBeat(beat)
-        else
-            local i = 1
-            local note = noteToPlay
-            for k, e in pairs(notes) do
-                if (i == note) then
-                    printMelody(currentIndex, len)
-                    playNote(e.note, e.velocity, getBeatDuration() * noteLength * noteCount , e.layer, e.channel, e.input, e.vol, e.pan, e.tune, e.slice)
-                    waitBeat(beat*noteCount)
-                    break
+        
+        local i = 1
+        local note = noteToPlay
+        for k, e in pairs(notes) do
+            if (i == note) then
+                printMelody(currentIndex, len)
+                local totalNoteLength = getBeatDuration() * noteLength
+                if legato.value then
+                    totalNoteLength = totalNoteLength * noteCount
                 end
-                i = i + 1
+                playNote(e.note, e.velocity, totalNoteLength , e.layer, e.channel, e.input, e.vol, e.pan, e.tune, e.slice)
+                waitBeat(beat*noteCount)
+                break
             end
+            i = i + 1
         end
     end
     arpLaunched = false
