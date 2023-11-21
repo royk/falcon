@@ -149,11 +149,11 @@ end
 
 function randomize(seed) 
   pattern = {}
-  math.randomseed(seed)
+  math.randomseed(seed) 
   for i = 1, patternMaxLength, 1 do
     local val = math.random(0,1)
     table.insert(pattern, val)
-    sequencer[getSequencerStepIndex(i) ].value = val==1
+    sequencer[getSequencerStepIndex(i)].value = val==1
   end
 end
 
