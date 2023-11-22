@@ -1,5 +1,5 @@
 --------------------------------------------------------------------------------
---! Random Rhythm
+--! Rhythm Banks
 --! Author : Roy Klein/Memento Eternum - For more works visit https://meternum.com/lab
 --! URL: https://github.com/royk/falcon
 --! Date : 01/01/2024
@@ -8,6 +8,7 @@
 patternMaxLength = 16
 maxPatterns = 8;
 pattern = {}
+beatPos = 1
 patternPosition = 0
 patternShiftAmount = 0
 customUIXPosition = 490
@@ -15,7 +16,11 @@ randomizeButton = Button("Randomize", false)
 randomizeButton.changed = function(self)
   randomize(getTime())
 end
+
 randomizeButton.bounds = {customUIXPosition+120, 5, 110, 20}
+notesInStep = {}
+stepInProgress = false
+sequencerRunning = false
 
 patternSelector = Knob{"Pattern", 1, 1, 8, true}
 patternSelector.changed = function(self) 
@@ -152,23 +157,58 @@ function randomize(seed)
   math.randomseed(seed) 
   for i = 1, patternMaxLength, 1 do
     local val = math.random(0,1)
-    table.insert(pattern, val)
     sequencer[getSequencerStepIndex(i)].value = val==1
   end
 end
 
-function onNote(e)
+function noteStep()
+  local len = tableLength(notesInStep)
+  if (len == 0) then return end
+      
+  if stepInProgress==false then
+    stepInProgress = true
+    updatePatternDisplay()
+    beatPos = beatPos + 1
+    runSequencer()
+    stepInProgress = false
+    notesInStep = {}
+  end
+end
+
+function tableLength(T)
+  local count = 0
+  for _ in pairs(T) do count = count + 1 end
+  return count 
+end
+
+function runSequencer() 
   updatePatternDisplay()
-  local beatPos = math.floor((getRunningBeatTime() * beatsSelectors[patternSelector.value].value ) % patternMaxLength)
   patternPosition = beatPos  % patternLengthSelectors[patternSelector.value].value + 1
+  print(beatPos, patternPosition)
   index = getSequencerStepIndex(patternPosition)
   sequencer[index].enabled = false
   if sequencer[index].value == true then
-    playNote(e.note, e.velocity, e.duration , e.layer, e.channel, e.input, e.vol, e.pan, e.tune, e.slice)
+    for k, e in pairs(notesInStep) do
+      playNote(e.note, e.velocity, e.duration, e.layer, e.channel, e.input, e.vol, e.pan, e.tune, e.slice)
+    end
   end
   patternPosition = patternPosition + 1 
   if patternPosition > patternLengthSelectors[patternSelector.value].value then 
     patternPosition = 1
   end
-  
+end
+
+function onNote(e)
+  notesInStep[e.id] = e
+  wait(1)
+  noteStep()
 end 
+
+function onEvent(e)
+  if e.type == Event.NoteOn then
+    onNote(e)
+  else if e.type == Event.NoteOff then
+      notesInStep[e.id] = nil
+    end
+  end
+end
