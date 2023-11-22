@@ -8,7 +8,7 @@
 patternMaxLength = 16
 maxPatterns = 8;
 pattern = {}
-beatPos = 1
+beatPos = 0
 patternPosition = 0
 patternShiftAmount = 0
 customUIXPosition = 490
@@ -183,8 +183,11 @@ end
 
 function runSequencer() 
   updatePatternDisplay()
+  local beat = math.floor((getRunningBeatTime() * 4 ) % patternMaxLength)
+  if beat==0 then 
+    beatPos = 0
+  end
   patternPosition = beatPos  % patternLengthSelectors[patternSelector.value].value + 1
-  print(beatPos, patternPosition)
   index = getSequencerStepIndex(patternPosition)
   sequencer[index].enabled = false
   if sequencer[index].value == true then
