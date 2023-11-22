@@ -12,32 +12,40 @@ beatPos = 0
 patternPosition = 0
 patternShiftAmount = 0
 customUIXPosition = 490
-randomizeButton = Button("Randomize", false)
-randomizeButton.changed = function(self)
-  randomize(getTime())
+resetButton = Button("Reset", false)
+resetButton.changed = function(self)
+  beatPos = -1
 end
 
-randomizeButton.bounds = {customUIXPosition+120, 5, 110, 20}
+resetButton.bounds = {customUIXPosition+120, 5, 110, 20}
 notesInStep = {}
+currentPattern = 1
 stepInProgress = false
+allowBeatReset = true
 sequencerRunning = false
-
-patternSelector = Knob{"Pattern", 1, 1, 8, true}
+patternSelector = Knob{"Bank", 1, 1, 8, true}
 patternSelector.changed = function(self) 
+  if patternShiftAmount > 0 then
+    shiftLeft(patternShiftAmount)
+  else
+    shiftRight(patternShiftAmount*-1)
+  end
+  updatePatternDisplay(false)
   patternShiftAmount = 0
   patternShift.value = 0
+  currentPattern = patternSelector.value
   for i = 1,patternMaxLength,1 do
     index = getSequencerStepIndex(i)
     pattern[i] = sequencer[index].value and 1 or 0
   end
   redrawControls()
   drawSequencer()
-end
+end 
 beatsSelectors = {}
 for i= 1, maxPatterns,1  do
   beatsSelectors[i] = Knob{"Beats"..tostring(i), 4, 1, 8, true, displayName="Beats Reset"}
   beatsSelectors[i].changed = function(self)
-    updatePatternDisplay()
+    updatePatternDisplay(sequencerRunning)
   end
   beatsSelectors[i].width = i==1 and 110 or 0
   beatsSelectors[i].visible = false
@@ -46,7 +54,7 @@ patternLengthSelectors = {}
 for i= 1, maxPatterns,1  do
   patternLengthSelectors[i] = Knob{"Pattern_Length"..tostring(i), maxPatterns, 1, patternMaxLength, true}
   patternLengthSelectors[i].changed = function(self)
-    updatePatternDisplay()
+    updatePatternDisplay(true)
   end
   patternLengthSelectors[i].width = i==1 and 110 or 0
   patternLengthSelectors[i].visible = false
@@ -64,12 +72,12 @@ patternShift.changed = function(self)
     shiftRight(patternShift.value - patternShiftAmount)
   end
   patternShiftAmount = patternShift.value
-  updatePatternDisplay()
+  updatePatternDisplay(sequencerRunning)
 end
 
 function redrawControls()
   for i= 1, maxPatterns,1  do
-    if i==patternSelector.value then
+    if i==currentPattern then
       patternLengthSelectors[i].visible = true
       patternLengthSelectors[i].width = 110
       patternLengthSelectors[i].x = 245
@@ -109,13 +117,17 @@ function shiftRight(amount)
 end
 
 function getSequencerStepIndex(i)
-  return (patternSelector.value-1)*patternMaxLength+i;
+  return (currentPattern-1)*patternMaxLength+i;
 end
 
-function updatePatternDisplay() 
+function updatePatternDisplay(changeEnabled) 
   for i = 1,patternMaxLength,1 do
     index = getSequencerStepIndex(i)
-    sequencer[index].enabled = i<=patternLengthSelectors[patternSelector.value].value
+    if changeEnabled then
+      sequencer[index].enabled = i<=patternLengthSelectors[currentPattern].value
+    else
+      sequencer[index].enabled = true
+    end
     sequencer[index].value = pattern[i]==1
   end
 end
@@ -147,7 +159,7 @@ function drawSequencer()
   for j= 1, maxPatterns,1  do
     for i = 1,patternMaxLength,1 do
       index = (j-1)*patternMaxLength+i ;
-      sequencer[index].visible = j==patternSelector.value
+      sequencer[index].visible = j==currentPattern
     end
   end
 end
@@ -167,7 +179,6 @@ function noteStep()
       
   if stepInProgress==false then
     stepInProgress = true
-    updatePatternDisplay()
     beatPos = beatPos + 1
     runSequencer()
     stepInProgress = false
@@ -182,12 +193,18 @@ function tableLength(T)
 end
 
 function runSequencer() 
-  updatePatternDisplay()
-  local beat = math.floor((getRunningBeatTime() * 4 ) % (patternMaxLength*beatsSelectors[patternSelector.value].value))
-  if beat==0 then 
-    beatPos = 0
-  end
-  patternPosition = beatPos  % patternLengthSelectors[patternSelector.value].value + 1
+  sequencerRunning = true
+  updatePatternDisplay(sequencerRunning)
+  local beat = math.floor((getRunningBeatTime() * 4 ) % (patternMaxLength*beatsSelectors[currentPattern].value))
+  if beat==0  then 
+    if allowBeatReset==true then
+      beatPos = 0
+      allowBeatReset = false
+    end
+  else
+    allowBeatReset = true
+  end 
+   patternPosition = beatPos  % patternLengthSelectors[currentPattern].value + 1
   index = getSequencerStepIndex(patternPosition)
   sequencer[index].enabled = false
   if sequencer[index].value == true then
@@ -196,7 +213,7 @@ function runSequencer()
     end
   end
   patternPosition = patternPosition + 1 
-  if patternPosition > patternLengthSelectors[patternSelector.value].value then 
+  if patternPosition > patternLengthSelectors[currentPattern].value then 
     patternPosition = 1
   end
 end
@@ -208,10 +225,16 @@ function onNote(e)
 end 
 
 function onEvent(e)
+  
   if e.type == Event.NoteOn then
     onNote(e)
-  else if e.type == Event.NoteOff then
-      notesInStep[e.id] = nil
-    end
+  end
+  if e.type == Event.NoteOff then
+    notesInStep[e.id] = nil
+  end
+  if e.type == 176 then
+    sequencerRunning = false
+    -- reenable all the buttons when the playback stops
+    updatePatternDisplay(sequencerRunning)
   end
 end
