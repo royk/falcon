@@ -35,7 +35,7 @@ patternSelector.changed = function(self)
 end
 beatsSelectors = {}
 for i= 1, maxPatterns,1  do
-  beatsSelectors[i] = Knob{"Beats"..tostring(i), 4, 1, 8, true, displayName="Beats"}
+  beatsSelectors[i] = Knob{"Beats"..tostring(i), 4, 1, 8, true, displayName="Beats Reset"}
   beatsSelectors[i].changed = function(self)
     updatePatternDisplay()
   end
@@ -183,7 +183,7 @@ end
 
 function runSequencer() 
   updatePatternDisplay()
-  local beat = math.floor((getRunningBeatTime() * 4 ) % patternMaxLength)
+  local beat = math.floor((getRunningBeatTime() * 4 ) % (patternMaxLength*beatsSelectors[patternSelector.value].value))
   if beat==0 then 
     beatPos = 0
   end
