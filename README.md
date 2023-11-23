@@ -9,7 +9,7 @@ The purpose of this arp is to generate random yet reproducible melodies on the f
 
 ## Rhythm Banks
 
-A midi sequencer, allows storing and alternating between up to 8 different patterns.
+A midi gater, allows storing and alternating between up to 8 different patterns.
 
 ## Licensing
 
