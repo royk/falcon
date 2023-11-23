@@ -1,5 +1,5 @@
 --------------------------------------------------------------------------------
---! Rhythm Banks
+--! Rhythm Banks: Midi gater
 --! Author : Roy Klein/Memento Eternum - For more works visit https://meternum.com/lab
 --! URL: https://github.com/royk/falcon
 --! Date : 01/01/2024
